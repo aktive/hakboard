@@ -1,0 +1,67 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HAKboard Setup",
+        "description": "HAKboard integrates your self-hosted [Kanboard](https://kanboard.org/) server (a free, open-source Kanban project management tool) into Home Assistant, enabling rich dashboard visualizations and workflow automation.\n\n**Prerequisites:** Access to, and API credentials for, an existing Kanboard installation. API details are located at `Kanboard UI \\ Settings \\ API`\n\n**⚠️ Instance Key (Important):** The Instance Key is a short, mandatory, unique identifier (e.g. `hl`). It is the namespace for all HAKboard entity IDs, ensuring uniqueness and preventing collisions.\n\n**Example:** setting the Instance Key to `hl` to denote your `Homelab` instance will result in the following created entity IDs: `sensor.hakboard_hl_xxx`\n\n**ℹ️ NOTE:** HAKboard is a community project and is not affiliated with Kanboard.",
+        "data": {
+          "instance_key": "Instance Key",
+          "display_name": "Instance Display Name",
+          "api_endpoint": "Kanboard API Endpoint URL",
+          "api_token": "Kanboard API Token",
+          "endpoint_id": "Endpoint ID",
+          "project_filter": "Project Filter",
+          "poll_interval": "Polling Interval"
+        },
+        "data_description": {
+          "instance_key": "Enter a short, unique Instance Key.",
+          "display_name": "Enter a friendly name for your Instance. This can be safely changed at any time.",
+          "api_endpoint": "Copy/Paste the full API endpoint URL from Kanboard, including /jsonrpc.php",
+          "api_token": "Copy/Paste the API Token from Kanboard.",
+          "project_filter": "Specify which Project IDs to sync. Examples: `1`, `1,5,11`, `1-3`, `1-3,5,7-9`",
+          "poll_interval": "How often HAKboard syncs Kanboard data with Home Assistant. Default 5m, min 5s."
+        }
+      }
+    },
+    "error": {
+      "interval_too_short": "Polling interval must be at least 5 seconds.",
+      "endpoint_already_exists": "This Endpoint ID is already in use. Please enter a unique one or edit the existing integration for this endpoint.",
+      "invalid_project_filter": "Invalid Project Filter. Please see the examples below.",
+
+      "invalid_url": "URL is invalid.",
+      "invalid_instance_key_format": "Instance Key must be less than 20 characters",
+      "invalid_input": "Something went wrong. Please verify your input and try again.",
+      "invalid_api_token_format": "API Token must be 40-80 characters."
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Configure HAKboard ({display_name})",
+        "description": "**Instance Key:** {endpoint_id}",
+        "data": {
+          "display_name": "Instance Display Name",
+          "api_endpoint": "Kanboard API Endpoint",
+          "api_token": "Kanboard API Token",
+          "project_filter": "Project Filter",
+          "poll_interval": "Polling Interval"
+        },
+        "data_description": {
+          "display_name": "Enter a friendly name for your Instance. This can be safely changed at any time.",
+          "api_endpoint": "Copy/Paste the full API endpoint from Kanboard, including /jsonrpc.php",
+          "api_token": "Copy/Paste the API Token from Kanboard.",
+          "project_filter": "Specify which Project IDs to sync. Examples: `1`, `1,5,11`, `1-3`, `1-3,5,7-9`",
+          "poll_interval": "How often HAKboard syncs Kanboard data with Home Assistant. Default 5m, min 5s."
+        }
+      }
+    },
+    "error": {
+      "interval_too_short": "Polling interval must be at least 5 seconds.",
+      "invalid_project_filter": "Invalid Project Filter. Please see the examples below.",
+
+      "invalid_url": "URL is invalid",
+      "invalid_input": "Something went wrong. Please verify your input and try again.",
+      "invalid_api_token_format": "API Token must be 40-80 characters."
+    }
+  }
+}

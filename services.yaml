@@ -1,0 +1,12 @@
+# services.yaml
+sync_now:
+  name: Force Synchronize
+  description: Immediately triggers a manual synchronization of the HAKboard integration for the specified entity's endpoint.
+  fields:
+    entity_id:
+      name: Endpoint Entity
+      description: Any entity belonging to the HAKboard instance (e.g., sensor.hakboard...).
+      required: true
+      selector:
+        entity:
+          domain: sensor

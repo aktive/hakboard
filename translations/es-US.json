@@ -1,0 +1,66 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuración de HAKboard",
+        "description": "HAKboard integra tu servidor autohospedado de [Kanboard](https://kanboard.org/) (una herramienta gratuita y de código abierto para la gestión de proyectos Kanban) en Home Assistant, permitiendo visualizaciones avanzadas en dashboards y automatización de flujos de trabajo.\n\n**Requisitos previos:** Acceso y credenciales API para una instalación existente de Kanboard. Los detalles del API se encuentran en `Kanboard UI \\ Settings \\ API`\n\n**⚠️ Clave de Instancia (Importante):** La Clave de Instancia es un identificador corto, obligatorio y único (por ejemplo, `hl`). Es el namespace para todos los IDs de entidades de HAKboard, garantizando unicidad y evitando colisiones.\n\n**Ejemplo:** establecer la Clave de Instancia como `hl` para denotar tu instancia `Homelab` resultará en los siguientes IDs de entidad creados: `sensor.hakboard_hl_xxx`\n\n**ℹ️ NOTA:** HAKboard es un proyecto de la comunidad y no está afiliado con Kanboard.",
+        "data": {
+          "instance_key": "Clave de Instancia",
+          "display_name": "Nombre de Pantalla de la Instancia",
+          "api_endpoint": "URL del Endpoint API de Kanboard",
+          "api_token": "Token API de Kanboard",
+          "endpoint_id": "ID del Endpoint",
+          "project_filter": "Filtro de Proyectos",
+          "poll_interval": "Intervalo de Actualización"
+        },
+        "data_description": {
+          "display_name": "Ingresa un nombre amigable para tu Instancia. Esto se puede cambiar en cualquier momento.",
+          "api_endpoint": "Copia/Pega la URL completa del endpoint API desde Kanboard, incluyendo /jsonrpc.php",
+          "api_token": "Copia/Pega el Token API desde Kanboard.",
+          "project_filter": "Especifica qué IDs de Proyectos sincronizar. Ejemplos: `1`, `1,5,11`, `1-3`, `1-3,5,7-9`",
+          "poll_interval": "Con qué frecuencia HAKboard sincroniza los datos de Kanboard con Home Assistant. Predeterminado 5m, mínimo 5s."
+        }
+      }
+    },
+    "error": {
+      "interval_too_short": "El intervalo de actualización debe ser de al menos 5 segundos.",
+      "endpoint_already_exists": "Este ID de Endpoint ya está en uso. Ingresa uno único o edita la integración existente para este endpoint.",
+      "invalid_project_filter": "Filtro de Proyectos inválido. Consulta los ejemplos a continuación.",
+
+      "invalid_url": "La URL es inválida.",
+      "invalid_instance_key_format": "La Clave de Instancia debe tener menos de 20 caracteres.",
+      "invalid_input": "Algo salió mal. Verifica tu información e inténtalo nuevamente.",
+      "invalid_api_token_format": "El Token API debe tener entre 40 y 80 caracteres."
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "title": "Configurar HAKboard ({display_name})",
+        "description": "**Clave de Instancia:** {endpoint_id}",
+        "data": {
+          "display_name": "Nombre de Pantalla de la Instancia",
+          "api_endpoint": "Endpoint API de Kanboard",
+          "api_token": "Token API de Kanboard",
+          "project_filter": "Filtro de Proyectos",
+          "poll_interval": "Intervalo de Actualización"
+        },
+        "data_description": {
+          "display_name": "Ingresa un nombre amigable para tu Instancia. Esto se puede cambiar en cualquier momento.",
+          "api_endpoint": "Copia/Pega el endpoint API completo desde Kanboard, incluyendo /jsonrpc.php",
+          "api_token": "Copia/Pega el Token API desde Kanboard.",
+          "project_filter": "Especifica qué IDs de Proyectos sincronizar. Ejemplos: `1`, `1,5,11`, `1-3`, `1-3,5,7-9`",
+          "poll_interval": "Con qué frecuencia HAKboard sincroniza los datos de Kanboard con Home Assistant. Predeterminado 5m, mínimo 5s."
+        }
+      }
+    },
+    "error": {
+      "interval_too_short": "El intervalo de actualización debe ser de al menos 5 segundos.",
+      "invalid_project_filter": "Filtro de Proyectos inválido. Consulta los ejemplos a continuación.",
+
+      "invalid_url": "La URL es inválida",
+      "invalid_input": "Algo salió mal. Verifica tu información e inténtalo nuevamente.",
+      "invalid_api_token_format": "El Token API debe tener entre 40 y 80 caracteres."
+    }
+  }
+}

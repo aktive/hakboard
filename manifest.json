@@ -1,0 +1,13 @@
+{
+  "domain": "hakboard",
+  "name": "HAKboard",
+  "version": "0.1.0",
+  "documentation": "https://github.com/aktive/hakboard",
+  "issue_tracker": "https://github.com/aktive/hakboard/issues",
+  "dependencies": [],
+  "requirements": [],
+  "codeowners": ["@aktive"],
+  "config_flow": true,
+  "options_flow": true,
+  "iot_class": "local_polling"
+}

@@ -1,0 +1,107 @@
+# Dependencies
+# https://github.com/thomasloven/lovelace-auto-entities
+# https://github.com/thomasloven/lovelace-card-mod
+# https://github.com/thomasloven/lovelace-layout-card
+# https://github.com/thomasloven/lovelace-template-entity-row
+
+type: custom:auto-entities
+card:
+  type: entities
+  title: Homelab 2 • Projects
+  show_header_toggle: false
+filter:
+  template: >
+    {% set ns = namespace(cards=[]) %}
+
+    {% set ignored = ['friendly_name', 'icon', 'id', 'name', 'identifier',
+    'description', 'unit_of_measurement', 'device_class', 'attribution',
+    'restored', 'supported_features', 'state_class', 'options', 'context',
+    'project_url', 'owner', 'project_email', 'last_activity', 'overdue_count']
+    %}
+
+
+    {% for s in states.sensor %}
+      {% if 'hakboard_' in s.entity_id and '_project_' in s.entity_id %}
+        
+        {# --- PART A: Build Column String (Bottom Line) --- #}
+        {% set ns_str = namespace(text=[]) %}
+        {% for k,v in s.attributes.items() %}
+           {# FIX: Only show columns that actually have tasks (>0) #}
+           {% if k not in ignored and v | int > 0 %}
+              {% set ns_str.text = ns_str.text + [k ~ ': ' ~ v | string] %}
+           {% endif %}
+        {% endfor %}
+        {% set col_text = ns_str.text | join(' | ') %}
+        
+        {# --- PART B: Build Meta String (Top Line) --- #}
+        {# 1. Time #}
+        {% set time_text = '' %}
+        {% set last_active = s.attributes.last_activity | default(0) %}
+        {% if last_active != 0 %}
+           {% set time_str = relative_time(last_active | as_datetime) %}
+           {% if time_str %}
+             {% set time_str = time_str.replace(" seconds", "s").replace(" second", "s").replace(" minutes", "m").replace(" minute", "m").replace(" hours", "h").replace(" hour", "h").replace(" days", "d").replace(" day", "d") %}
+             {% set time_text = '🕒 ' ~ time_str %}
+           {% endif %}
+        {% endif %}
+
+        {# 2. ID and Owner with Emojis #}
+        {% set id_text = '#️⃣ ' ~ s.attributes.id %}
+        {% set owner_first = (s.attributes.owner | string).split(' ')[0] %}
+        {% set owner_text = '👤 ' ~ owner_first %}
+
+        
+        {# 3. Combine Top Line #}
+        {% set meta_parts = [id_text] %}
+        {% if time_text %}{% set meta_parts = meta_parts + [time_text] %}{% endif %}
+        {% set meta_parts = meta_parts + [owner_text] %}
+        
+        {# 4. NEW: Add Overdue Warning #}
+        {% set overdue = s.attributes.overdue_count | default(0) | int %}
+        {% if overdue > 0 %}
+           {% set meta_parts = meta_parts + ['⚠️ ' ~ overdue ~ ' Overdue'] %}
+        {% endif %}
+
+        {% set meta_line = meta_parts | join(' | ') %}
+
+        {# --- PART C: Combine Both Lines (Using \n instead of <br>) --- #}
+        {% if col_text %}
+            {# ADDED CHART EMOJI HERE #}
+            {% set final_secondary = meta_line ~ '\n📊 ' ~ col_text %}
+        {% else %}
+            {% set final_secondary = meta_line ~ '\n✅ 0 Active Tasks' %}
+        {% endif %}
+
+        {# --- PART D: Get URL & Name --- #}
+        {% set url = s.attributes.project_url | default('') %}
+        {% set clean_name = s.attributes.name | default(s.attributes.friendly_name) %}
+        
+        {# --- PART E: Create Row --- #}
+        {% set row = {
+          'type': 'custom:template-entity-row',
+          'entity': s.entity_id,
+          'name': clean_name,
+          'secondary': final_secondary,
+          'tap_action': {
+            'action': 'url',
+            'url_path': url
+          },
+          'card_mod': {
+            'style': '.secondary { white-space: pre-wrap !important; height: auto !important; line-height: 1.4em !important; }'
+          }
+        } %}
+        
+        {% set ns.cards = ns.cards + [row] %}
+        
+      {% endif %}
+    {% endfor %}
+
+
+    {{ ns.cards }}
+sort:
+  method: state
+  reverse: true
+  numeric: true
+grid_options:
+  columns: 13
+  rows: auto
