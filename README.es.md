@@ -8,11 +8,12 @@
 ## Introducción
 HAKboard integra datos de proyectos, tareas y usuarios desde [Kanboard](https://kanboard.org/), una herramienta de gestión de proyectos Kanban gratuita y de código abierto, dentro de [Home Assistant](https://www.home-assistant.io/), una plataforma de automatización del hogar de código abierto. Almacena datos de proyectos en una colección de entidades de sensor generadas dinámicamente para una fácil integración en automatizaciones y tableros. Se instala y configura exclusivamente a través de la interfaz de usuario de [Home Assistant Community Store (HACS)](https://www.hacs.xyz/) como una integración personalizada.
 
-**Antecedentes**: El propósito inicial de desarrollar HAKboard fue explorar cómo podría verse una integración personalizada de Home Assistant sin necesidad de escribir código, y ojalá hacerla accesible para usuarios no técnicos. Esto requirió un fuerte enfoque en:
-- **Experiencia de usuario:** HAKboard debe ser 100% configurable desde la interfaz desde el primer día.
-- **Documentación:** Los usuarios no deberían tener que mirar el código para entender cómo funciona una integración.
-- **Cumplimiento:** Implementamos los métodos más recientes y aprobados por HA para crear y gestionar entidades, realizar llamadas a la API, construir la interfaz y generar tarjetas Lovelace nativas.
-- **Velocidad:** HAKboard es **rápido**. Implementa las mejores prácticas de HA para instalación, reconfiguración, llamadas de red y gestión de entidades.
+**Antecedentes**: El objetivo al desarrollar HAKboard fue explorar cómo podría verse una integración personalizada de Home Assistant sin necesidad de escribir código, y hacerlo accesible para usuarios no técnicos. Esto requirió enfocarse en:
+- **Experiencia de usuario:** Debe ser fácil de instalar y totalmente configurable desde la interfaz.
+- **Documentación:** Los usuarios no deberían tener que revisar el código para entender cómo funciona una integración, y se debe incluir un esquema de datos.
+- **Cumplimiento:** Implementar los métodos más recientes y aprobados por HA para crear y gestionar entidades, realizar llamadas a la API, construir la interfaz y generar tarjetas Lovelace nativas.
+- **Velocidad:** Aplicar las mejores prácticas de HA para instalación, reconfiguración, llamadas de red y gestión de entidades.
+
 
 ## Características
 - Configuración completamente basada en la UI (sin YAML ni código), instalable mediante HACS.
