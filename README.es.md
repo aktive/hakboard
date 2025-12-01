@@ -6,7 +6,7 @@
 🌐 **Idioma:** [🇺🇸 English](README.md) | [🇪🇸 Español](README.es.md)
 
 ## Introducción
-HAKboard integra datos de proyectos, tareas y usuarios desde [Kanboard](https://kanboard.org/), una herramienta de gestión de proyectos Kanban gratuita y de código abierto, dentro de [Home Assistant](https://www.home-assistant.io/), una plataforma de automatización del hogar de código abierto. Almacena datos de proyectos en una colección de entidades de sensor generadas dinámicamente para una fácil integración en automatizaciones y tableros. Se instala y configura exclusivamente a través de la interfaz de usuario de [Home Assistant Community Store (HACS)](https://www.hacs.xyz/) como una integración personalizada.
+HAKboard integra datos de proyectos, tareas y usuarios desde [Kanboard](https://kanboard.org/), una herramienta de gestión de proyectos Kanban gratuita y de código abierto, dentro de [Home Assistant](https://www.home-assistant.io/), una plataforma de automatización del hogar de código abierto. Almacena datos de proyectos en una colección de entidades de sensor generadas dinámicamente para una fácil integración en automatizaciones y tableros.
 
 **Antecedentes**: El objetivo al desarrollar HAKboard fue explorar cómo podría verse una integración personalizada de Home Assistant sin necesidad de escribir código, y hacerlo accesible para usuarios no técnicos. Esto requirió enfocarse en:
 - **Experiencia de usuario:** Debe ser fácil de instalar y totalmente configurable desde la interfaz.
