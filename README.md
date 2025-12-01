@@ -54,7 +54,15 @@ It's tiny, free, fast (both client and server-side), highly customizable, suppor
 *Setup / re-configuration screen.*  
 
 ## I'm sold! How do I get started?
+
+⚠️ **IMPORTANT INSTALL NOTES:** HAKboard is currently going through the official HACS approval process. In the meantime, please follow these instructions if you would like to install HAKboard (existing Kanboard server required):
+- HA > HACS > ⚙️ (Top right) > Custom Repositories > Add: https://github.com/aktive/hakboard as type Integration
+- Configure your Kanboard instance via Settings (Bottom left) > Devices & services > Add (Bottom right) > Search for HAKboard
+- **NOTE:** If HAKboard does not appear (either as an integration or a dashboard card), please refresh your browser or restart HA.
+
 Please read the [Documentation](#documentation) section below so you know what to expect post-installation.
+
+### Manual installation
 ### Installing via HACS (Recommended)
 HACS installations offer upgrade notifications, one-click upgrades and rollback support.
 1. Login to HA and open HACS
