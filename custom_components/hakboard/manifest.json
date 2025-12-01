@@ -1,12 +1,12 @@
 {
   "domain": "hakboard",
   "name": "HAKboard",
-  "version": "0.1.1",
-  "documentation": "https://github.com/aktive/hakboard",
-  "issue_tracker": "https://github.com/aktive/hakboard/issues",
-  "dependencies": ["http"],
-  "requirements": [],
   "codeowners": ["@aktive"],
   "config_flow": true,
-  "iot_class": "local_polling"
+  "dependencies": ["http"],
+  "documentation": "https://github.com/aktive/hakboard",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/aktive/hakboard/issues",
+  "requirements": [],
+  "version": "0.1.3"
 }
