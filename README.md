@@ -8,14 +8,14 @@
 ## Introduction
 HAKboard integrates project, task and user data from [Kanboard](https://kanboard.org/), a free and open source Kanban project management tool, into [Home Assistant](https://www.home-assistant.io/), an open source home automation platform. It stores project data in a collection of dynamically generated sensor entities for easy integration into automations and dashboards.
 
-**Background**:  developing HAKboard was to explore what a zero-code Home Assistant custom integration could look like and hopefully make it easy for non-technical users. This necessitated a focus on:
-- **User experience:** Must be easy to install UI-configurable
+**Background**: While developing HAKboard we wanted to explore what a low-code Home Assistant integration could look like and hopefully make it easy for non-technical users. This necessitated a focus on:
+- **User experience:** Must be easy to install and UI-configurable
 - **Documentation:** Users should not have to look at code to understand how an integration works, and a data schema must be included.
 - **Compliance:** Implement the latest, HA-approved methods to create and manage entities, perform API calls, construct the UI and generate native Lovelace cards.
-- **Speed:** Implement HA best practices for installation, re-configuration, network calls and entity management.
+- **Speed:** Implement HA best practices for installation & re-configuration UI flows, network calls and entity management.
 
 ## Features
-- Fully UI-driven configuration (no YAML or code required), installable via HACS.
+- UI-driven configuration (no YAML or code required), installable via HACS.
 - Includes three pre-built Lovelace cards: **System Status**, **Users**, and **Projects**. (see [Screenshots](#screenshots)).
 - Connects to Kanboard using the official JSON-RPC API (webhook support planned).
 - Adjustable polling interval (minimum 5 seconds) for near-real-time updates - use responsibly.
@@ -28,9 +28,9 @@ HAKboard integrates project, task and user data from [Kanboard](https://kanboard
 - Localization included: 🇺🇸 English, 🇪🇸 Español.
 
 ## Functionality
-In this initial release, it is a one-way sync of Kanboard data into HA, with deep-linking to Kanboard projects from the HA dashboard. It will create an entity for every project that provides aggregate data for tasks, task status, assignees, columns etc.. giving you an excellent birds eye view of your environment, as well as the ability to create automations from the sensor data.
+Data is synced from Kanboard to HA. It will create an entity for every project that provides aggregate data for tasks, status, assignees, columns etc.. giving you a birds-eye view of your environment, as well as the ability to create automations from the sensor data. A very near release (see [Roadmap](#roadmap)) will introduce the creation of entities for each task and person, and likely others. We wanted to ensure the core entity generation system is rock-solid before opening it up to potentially thousands of new task entities and thought it prudent to stagger this functionality.
 
-A very near release (see [Roadmap](#roadmap)) will introduce the creation of entities for each task and person, and likely others. We wanted to ensure the core entity generation system is rock-solid before opening it up to potentially thousands of new entities and thought it prudent to stagger this functionality.
+There are 3 dashboard [cards](#card-configuration) available. A native Lovelace `HAKboard Status Card` (add via `Dashboard \ Add Card`), and two YAML cards that dynamically generate card content by filtering on HAKboard entities. **Note** The YAML cards require the installation of several HACS add-ons. Please see the header of the files for details.
 
 ## Why integrate a project management system with Home Assistant?
 HAKboard enables Kanboard to become an active participant in your smart home. This unlocks some obvious use cases, such as triggering events when software-related milestones are achieved or critical bugs are updated. While this alone opens up some interesting possibilities, it becomes truly powerful when applied creatively. Other ideas include:
@@ -50,10 +50,10 @@ It's tiny, free, fast (both client and server-side), highly customizable, suppor
 
 ## Screenshots
 <img src="custom_components/hakboard/img/dashboard01.png"><br>
-*Dashboard overview showing status, users, and projects. The HAKboard Status card includes controls to refresh the integration or jump to the re-configuration screen straight from the Dashboard to save you a few (thousand) clicks. Clicking on a user will bring up their HA entity history card and show their active task history. Clicking on a project will open that project directly in Kanboard.*  
+*Dashboard overview showing status, users, and projects. Includes controls to refresh the integration or jump to the re-configuration screen straight from the Dashboard. Clicking on a user will bring up their HA entity history card and show their active task history. Clicking on a project will open that project directly in Kanboard.*  
 
 <img src="custom_components/hakboard/img/status_card_editor.png" width="900"><br>
-*Status card editor with customization options. *Every* element on the card can be configured.*  
+*Status card editor with customization options. Every element on the card can be configured.*  
 
 <img src="custom_components/hakboard/img/configuration.png" width="560"><br>
 *Setup / re-configuration screen.*  
@@ -67,7 +67,6 @@ It's tiny, free, fast (both client and server-side), highly customizable, suppor
 
 Please read the [Documentation](#documentation) section below so you know what to expect post-installation.
 
-### Manual installation
 ### Installing via HACS (Recommended)
 HACS installations offer upgrade notifications, one-click upgrades and rollback support.
 1. Login to HA and open HACS
@@ -86,7 +85,7 @@ Manual installation is not recommended unless you plan to manually keep on top o
 During installation, you must specify a Kanban Endpoint (your Kanboard server). At this time, you must also specify a unique `Instance Key`. This fictional identifier is prefixed to all created entity IDs to ensure uniqueness and make them human-readable. You can enter any name you like, but it's recommended to pick a succinct name you can rapidly identify as it will appear on all HAKboard created entity IDs. Further, you must specify a project filter to govern which projects will be synced from Kanboard to HA. Kanboard's Project ID is also added to the entity IDs for uniqueness.
 
 ### Re-configuration
-To re-configure an existing integration, visit the `Settings / Devices & services / HAKboard` screen and click the `⚙️` icon on the integration. Or, simply click the `⚙️` icon directly from the HAKBoard Status Card via the dashboard! Re-configuration enables you to change the Instance Name, Endpoint URL, API Token, Project Filter and Polling Interval. You can **not** change the `Instance Key` as this is used as a part of the key for unique entity generation. If you need to change the `Instance Key`, remove the integration and re-add it with a new value. No data will be lost if you remove and re-create an integration.
+To re-configure an existing integration, visit the `Settings / Devices & services / HAKboard` screen and click the `⚙️` icon on the integration. Or, simply click the `⚙️` icon directly from the HAKBoard Status Card via the dashboard! Re-configuration enables you to change the Instance Name, Endpoint URL, API Token, Project Filter and Polling Interval. You cannot change the `Instance Key` as this is used as a part of the key for unique entity generation. If you need to change the `Instance Key`, remove the integration and re-add it with a new value. No data will be lost if you remove and re-create an integration.
 
 ### Integration and Entities
 HAKboard will automatically generate a collection of HA sensor entities to store Kanboard data. Sensors are used because they're a well-supported entity type in HA, can receive real-time updates, store history, and are powerful dashboard allies.
@@ -99,11 +98,10 @@ For example: `sensor.hakboard_hl2_system_status`
 System entities provide high-level statistics about your integration.  
 
 **Entity ID:** *sensor.hakboard_hl2_system_status*: 10 (number of open tasks across all projects)  
-**Name:** *Homelab2 • System Status*
 - Attribute: api_endpoint: https://kanboard.homelab2.net/jsonrpc.php
 - Attribute: config_entry_id: 01KB959BNGD9PEV0GZAAZM9WTS
-- Attribute: display_name: Homelab2
-- Attribute: friendly_name: Homelab2 • System Status
+- Attribute: display_name: Homelab 2
+- Attribute: friendly_name: Homelab 2 • System Status
 - Attribute: icon: mdi:pulse
 - Attribute: last_success_timestamp: 2025-11-29T17:49:11.182526-08:00
 - Attribute: poll_interval: 5s
@@ -115,13 +113,13 @@ System entities provide high-level statistics about your integration.
 Summary entities provide high-level statistics for projects and users.
 
 **Entity ID:** *sensor.hakboard_hl2_summary_projects_total*: 10 (number of total projects in Kanboard)  
-**Name:** *Homelab2 • Summary: Projects Total*
+- Attribute: name: *Homelab 2 • Summary: Projects Total*
 
 **Entity ID:** *sensor.hakboard_hl2_summary_projects_synced*: 6 (number of projects synced after applying project filters)  
-**Name:** *Homelab2 • Summary: Projects Synced*
+- Attribute: name: *Homelab 2 • Summary: Projects Synced*
 
 **Entity ID:** *sensor.hakboard_hl2_summary_users*: 4 (number of total users in Kanboard)  
-**Name:** *Homelab2 • Summary: Users*
+- Attribute: name: *Homelab 2 • Summary: Users*
 - Attribute: active_count: 4
 - Attribute: admin_count: 2
 - Attribute: user_list:
@@ -145,9 +143,9 @@ Project entities provide project statistics.
 > If you sync **26,326** projects, HAKboard will create **26,326 project entities**.
 
 **Entity ID:** *sensor.hakboard_hl2_project_1*: 4 (number of active tasks in this project)  
-**Name:** *Homelab 2 • Project 1: Shopping List*
+- Attribute: name: Shopping List
 - Attribute: id: 1 (Kanboard `project_id`.)
-- Attribute: name: Home Assistant (Kanboard `name`.)
+- Attribute: friendly_name: Homelab 2 • Project 1: Shopping List (Kanboard `name`.)
 - Attribute: identifier: HA (Kanboard `identifier`.)
 - Attribute: description: The Fitswell Family's Shopping List (Kanboard `description`.)
 - Attribute: project_url: https://kanboard.homelab2.net/board/1 (Kanboard `url`. Enables click-through to projects from the dashboard.)
@@ -157,6 +155,7 @@ Project entities provide project statistics.
 - Attribute: overdue_count: 1 (Derived from Kanboard `date_due`, `is_active` and `is_overdue`.)
 - Attribute: Backlog: 12 (Count of tasks assigned to the "Backlog" column; column metadata retrieved via Kanboard `getColumns`, task assignments from Kanboard `project` API method. Note: an attribute will be created for each column configured in a project, though only two are listed here as examples.)
 - Attribute: Open: 3 (Count of tasks assigned to the "Open" column; column metadata retrieved via Kanboard `getColumns`, task assignments from Kanboard `project` API method. Note: an attribute will be created for each column configured in a project, though only two are listed here as examples.)
+
 
 Any integration that threatens to introduce potentially unlimited dynamically generated entities is scary. Nightmare scenarios include unintended bulk entity creation with possible overwrites, entity duplication, zombie entities that magically reappear after being deleted, or flaky entities that behave inconsistently, especially upon HA reboots. HAKboard was written carefully to ensure all created entities are in tight sync with their counterparts in Kanboard, and most importantly, well documented. This is further highlighted with some scenarios around the deletion and modification of entities and projects:
 
@@ -173,19 +172,19 @@ If a project is renamed in Kanboard, the project entity's friendly name (NOT the
 If an entity's unique ID or name are edited in HA, those changes will persist unless manually renamed back to their original name. To reset the name, simply delete the custom name from the entity edit screen and it will revert to the default name generated by HAKboard. To reset the entity ID, you must manually rename it back to its original state. Entities deleted from HA are retained in HA's entity registry (`.storage/core.entity_registry`). So if you delete the integration then re-add it specifying the same Kanboard server and endpoint ID, the renamed entities will still be renamed in the new integration. This is expected HA behavior.
 
 ### Scenario 5: Project filter scope change
-Reducing or increasing an existing integration's project filter will cause HAKboard to apply those changes (and add/remove entities as required) as soon as the `Submit` button is clicked configuration screen. This was purposefully implemented to maintain state between HA and Kanboard, however if you'd like to change this default behavior we'd like to hear from you.
+Reducing or increasing an existing integration's project filter will cause HAKboard to apply those changes (and add/remove entities as required) as soon as the `Submit` button is clicked on the configuration screen. This was purposefully implemented to maintain state between HA and Kanboard, however if you'd like to change this default behavior we'd like to hear from you.
 
 ## Card Configuration
-Three cards are included with HAKboard. See [Screenshots](#screenshots) to view them on the dashboard.
+Three cards are included with HAKboard. See [Screenshots](#screenshots) to view them on the dashboard. 
 
 ### HAKBoard Status Card (frontend/hakboard-status-card.js)
-Displays useful information about your HAKboard integration. This is a bespoke Lovelace card specificaly developed for HAKboard and can be easily added to your dashboard via the UI.
+Displays useful information about your HAKboard integration. This is a bespoke Lovelace card specifically developed for HAKboard and can be easily added to your dashboard via the UI.
 - **USAGE:** From your dashboard, select the `+ Add Card` button and choose the `HAKboard Status` card. It has multi-endpoint support, enables the user to configure which elements are displayed, and includes `🔄️ Refresh` and `⚙️ Config` buttons that allow you to refresh your Kanboard data, or configure the integration directly from the dashboard! This is extremely useful during the initial configuration period, after which they can be hidden using the checkboxes.
 
 ### Users Card (lovelace_card_users.yaml)
 Displays a list of all users and their total assigned tasks. It denotes Admins, Users and Project Managers using icons. Items on this card are clickable entities that will open the HA Entity view. This card automatically looks for any HAKboard user entities and adds them to the card. Please review `lovelace_card_users.yaml` for examples.
 - **USAGE:** This card is built using standard Lovelace YAML, but you do not need to edit YAML files (phew). The easiest way is to paste the prebuilt card code directly into the dashboard editor. From your HA dashboard, select `+ Add Card`, choose any type of card then select `Show code editor` and paste the contents of `lovelace_card_users.yaml`. It will automatically detect all relevant `hakboard.` user entities and display them on the card.
-- **NOTE:** This card is not (yet) a native lovelace card. This was an intentional design in the early release do demonstrate the power of dynamically generating a card's contents based on flexible criteria. The card has several dependencies listed at the top of the file.
+- **NOTE:** This card is not (yet) a native lovelace card. This was an intentional design in the early release to demonstrate the flexibility of dynamically generating a card's contents based on flexible criteria. The card has several dependencies listed at the top of the file.
 
 ### Projects Card (lovelace_card_projects.yaml)
 Displays vital statistics for each project, including the total number of tasks, `#️⃣ Project ID`, `🕑 Last Activity`, `👤 Project Owner`, `⚠️ Overdue Tasks` and 📊 statistics on the number of open tasks for each column configured in the project. Each entry is a clickable link that will take you directly to the project in Kanboard.
