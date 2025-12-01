@@ -8,11 +8,11 @@
 ## Introduction
 HAKboard integrates project, task and user data from [Kanboard](https://kanboard.org/), a free and open source Kanban project management tool, into [Home Assistant](https://www.home-assistant.io/), an open source home automation platform. It stores project data in a collection of dynamically generated sensor entities for easy integration into automations and dashboards. It is installed and configured exclusively via the [Home Assistant Community Store (HACS)](https://www.hacs.xyz/) UI as a custom integration.
 
-**Background**: The purpose of initially developing HAKboard was to explore what a **great** Home Assistant custom integration should look like. After spending too long  using, configuring and fixing poorly developed integrations, we were curious to see what the gold standard looked like. This necessitated a deep focus on:
-- **User experience:** HAKboard must be 100% UI-configurable from day 1.
-- **Documentation:** Users should not have to look at code to understand how an integration works.
+**Background**: The purpose of initially developing HAKboard was to explore what a zero-code Home Assistant custom integration could look like and hopefully make it easy for non-technical users. This necessitated a focus on:
+- **User experience:** HAKboard must be easy to install and 100% UI-configurable from day 1.
+- **Documentation:** Users should not have to look at code to understand how an integration works, and a data schemas must be included.
 - **Compliance:** We implemented the latest, HA-approved methods to create and manage entities, perform API calls, construct the UI and generate native Lovelace cards.
-- **Speed:** HAKboard is **fast**. Highly optimized code implements best practices for installation, re-configuration, network calls and entity management.
+- **Speed:** HAKboard is **fast**. Implementation of HA best practices for installation, re-configuration, network calls and entity management.
 
 ## Features
 - Fully UI-driven configuration (no YAML or code required), installable via HACS.
@@ -26,6 +26,11 @@ HAKboard integrates project, task and user data from [Kanboard](https://kanboard
 - Automatic entity creation with collision detection and orphan cleanup.
 - Optimized for network performance using Home Assistant’s [DataUpdateCoordinator](https://developers.home-assistant.io/docs/integration_fetching_data/)
 - Localization included: 🇺🇸 English, 🇪🇸 Español.
+
+## Functionality
+In this initial release, it is a one-way sync of Kanboard data into HA, with deep-linking to Kanboard projects from the HA dashboard. It will create an entity for every project that provides aggregate data for tasks, task status, assignees, columns etc.. giving you an excellent birds eye view of your environment, as well as the ability to create automations from the sensor data.
+
+A very near release (see [Roadmap](#roadmap)) will introduce the creation of entities for each task and person, and likely others. We wanted to ensure the core entity generation system is rock-solid before opening it up to potentially thousands of new entities and thought it prudent to stagger this functionality.
 
 ## Why integrate a project management system with Home Assistant?
 HAKboard enables Kanboard to become an active participant in your smart home. This unlocks some obvious use cases, such as triggering events when software-related milestones are achieved or critical bugs are updated. While this alone opens up some interesting possibilities, it becomes truly powerful when applied creatively. Other ideas include:

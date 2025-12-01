@@ -8,11 +8,11 @@
 ## Introducción
 HAKboard integra datos de proyectos, tareas y usuarios desde [Kanboard](https://kanboard.org/), una herramienta de gestión de proyectos Kanban gratuita y de código abierto, dentro de [Home Assistant](https://www.home-assistant.io/), una plataforma de automatización del hogar de código abierto. Almacena datos de proyectos en una colección de entidades de sensor generadas dinámicamente para una fácil integración en automatizaciones y tableros. Se instala y configura exclusivamente a través de la interfaz de usuario de [Home Assistant Community Store (HACS)](https://www.hacs.xyz/) como una integración personalizada.
 
-**Contexto**: El objetivo inicial de desarrollar HAKboard fue explorar cómo debería verse una integración personalizada de Home Assistant **excelente**. Después de pasar demasiado tiempo usando, configurando y corrigiendo integraciones mal desarrolladas, queríamos ver cómo lucía el estándar de oro. Esto requirió un enfoque profundo en:
-- **Experiencia del usuario:** HAKboard debe ser 100% configurable desde la UI desde el día 1.
-- **Documentación:** Los usuarios no deberían tener que mirar código para entender cómo funciona una integración.
-- **Cumplimiento:** Implementamos los métodos aprobados más recientes por HA para crear y gestionar entidades, realizar llamadas API, construir la UI y generar tarjetas Lovelace nativas.
-- **Velocidad:** HAKboard es **rápido**. El código altamente optimizado implementa las mejores prácticas para instalación, reconfiguración, llamadas de red y gestión de entidades.
+**Antecedentes**: El propósito inicial de desarrollar HAKboard fue explorar cómo podría verse una integración personalizada de Home Assistant sin necesidad de escribir código, y ojalá hacerla accesible para usuarios no técnicos. Esto requirió un fuerte enfoque en:
+- **Experiencia de usuario:** HAKboard debe ser 100% configurable desde la interfaz desde el primer día.
+- **Documentación:** Los usuarios no deberían tener que mirar el código para entender cómo funciona una integración.
+- **Cumplimiento:** Implementamos los métodos más recientes y aprobados por HA para crear y gestionar entidades, realizar llamadas a la API, construir la interfaz y generar tarjetas Lovelace nativas.
+- **Velocidad:** HAKboard es **rápido**. Implementa las mejores prácticas de HA para instalación, reconfiguración, llamadas de red y gestión de entidades.
 
 ## Características
 - Configuración completamente basada en la UI (sin YAML ni código), instalable mediante HACS.
@@ -26,6 +26,11 @@ HAKboard integra datos de proyectos, tareas y usuarios desde [Kanboard](https://
 - Creación automática de entidades con detección de colisiones y limpieza de entidades huérfanas.
 - Optimizado para rendimiento de red usando [DataUpdateCoordinator](https://developers.home-assistant.io/docs/integration_fetching_data/) de Home Assistant.
 - Localización incluida: 🇺🇸 English, 🇪🇸 Español.
+
+## Funcionalidad
+En esta versión inicial, se realiza una sincronización unidireccional de los datos de Kanboard hacia Home Assistant, con enlaces directos a los proyectos de Kanboard desde el panel de HA. Se crea una entidad para cada proyecto que proporciona datos agregados sobre tareas, estado de tareas, asignaciones, columnas, etc., ofreciéndote una excelente vista panorámica de tu entorno, además de la posibilidad de crear automatizaciones basadas en estos sensores.
+
+En una versión muy próxima (ver [Hoja de ruta](#roadmap)) se añadirá la creación de entidades para cada tarea y cada persona, y posiblemente más. Queríamos garantizar que el sistema central de generación de entidades fuera totalmente sólido antes de abrirlo a potencialmente miles de nuevas entidades, por lo que consideramos prudente implementar esta funcionalidad de manera gradual.
 
 ## ¿Por qué integrar un sistema de gestión de proyectos con Home Assistant?
 HAKboard permite que Kanboard sea un participante activo en su hogar inteligente. Esto desbloquea algunos casos de uso evidentes, como desencadenar eventos cuando se alcanzan hitos de software o se actualizan errores críticos. Aunque esto por sí solo abre posibilidades interesantes, se vuelve realmente poderoso cuando se aplica de manera creativa. Otras ideas incluyen:
