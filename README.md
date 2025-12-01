@@ -42,7 +42,7 @@ HAKboard enables Kanboard to become an active participant in your smart home. Th
 While some of these examples are elongated and over-managed, it serves to illustrate the possibilities of a tightly-coupled project management system with Home Assistant.
 
 ## Interesting, but why Kanboard?
-It's tiny, free, fast (both client and server-side), highly customizable, supports branding and themes (including mobile responsive themes), plugins, has an active community, a well maintained [repo](https://github.com/kanboard/kanboard) and an official [Docker image](https://hub.docker.com/r/kanboard/kanboard). The Docker image does not require a separate database as it ships with SQLite. It has sensible defaults and pre-configured board layouts so it's running in minutes, not hours or painful weekends.
+It's tiny, free, fast (both client and server-side), highly customizable, supports branding and themes (including mobile responsive themes), plugins and an official [Docker image](https://hub.docker.com/r/kanboard/kanboard). The Docker image does not require a separate database as it ships with SQLite. It has sensible defaults and pre-configured board layouts so it's running in minutes, not hours or painful weekends.
 
 **Notes**
 * You need access to an existing Kanboard installation, HAKboard does not install Kanboard for you.
