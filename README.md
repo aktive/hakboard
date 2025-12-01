@@ -1,4 +1,4 @@
-<img src="img/logo.png?raw=true" width="200">
+<img src="custom_components/hakboard/icon.png?raw=true" width="200">
 
 # HAKboard
 
@@ -44,13 +44,13 @@ It's tiny, free, fast (both client and server-side), highly customizable, suppor
 * HAKboard is not affiliated with Kanboard, we just think it's neat. 💖
 
 ## Screenshots
-<img src="img/dashboard01.png"><br>
+<img src="custom_components/hakboard/img/dashboard01.png"><br>
 *Dashboard overview showing status, users, and projects. The HAKboard Status card includes controls to refresh the integration or jump to the re-configuration screen straight from the Dashboard to save you a few (thousand) clicks. Clicking on a user will bring up their HA entity history card and show their active task history. Clicking on a project will open that project directly in Kanboard.*  
 
-<img src="img/status_card_editor.png" width="900"><br>
+<img src="custom_components/hakboard/img/status_card_editor.png" width="900"><br>
 *Status card editor with customization options. *Every* element on the card can be configured.*  
 
-<img src="img/configuration.png" width="560"><br>
+<img src="custom_components/hakboard/img/configuration.png" width="560"><br>
 *Setup / re-configuration screen.*  
 
 ## I'm sold! How do I get started?

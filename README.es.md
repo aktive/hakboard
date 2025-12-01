@@ -1,4 +1,4 @@
-<img src="img/logo.png?raw=true" width="200">
+<img src="custom_components/hakboard/icon.png?raw=true" width="200">
 
 # HAKboard
 
@@ -44,13 +44,13 @@ Es pequeño, gratuito, rápido (tanto en cliente como servidor), altamente perso
 * HAKboard no está afiliado con Kanboard, solo pensamos que es genial. 💖
 
 ## Capturas de pantalla
-<img src="img/dashboard01.png"><br>
+<img src="custom_components/hakboard/img/dashboard01.png"><br>
 *Descripción general del tablero mostrando estado, usuarios y proyectos. La tarjeta de Estado incluye controles para actualizar la integración o abrir la pantalla de reconfiguración directamente desde el tablero.*  
 
-<img src="img/status_card_editor.png" width="900"><br>
+<img src="custom_components/hakboard/img/status_card_editor.png" width="900"><br>
 *Editor de la tarjeta de estado con opciones de personalización.*  
 
-<img src="img/configuration.png" width="560"><br>
+<img src="custom_components/hakboard/img/configuration.png" width="560"><br>
 *Pantalla de configuración / reconfiguración.*  
 
 ## Estoy convencido, ¿cómo empiezo?
