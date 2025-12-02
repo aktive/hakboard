@@ -18,7 +18,7 @@
           "instance_name": "Ingresa un nombre amigable para tu Instancia. Esto se puede cambiar en cualquier momento.",
           "api_endpoint": "Copia/Pega la URL completa del endpoint API desde Kanboard, incluyendo /jsonrpc.php",
           "api_token": "Copia/Pega el Token API desde Kanboard.",
-          "verify_ssl": "Verificar certificados SSL/TLS al conectarse a Kanboard. Deshabilitar solo para certificados autofirmados.",
+          "verify_ssl": "Deshabilitar solo para certificados autofirmados.",
           "project_filter": "Especifica qué IDs de Proyectos sincronizar. Ejemplos: `1`, `1,5,11`, `1-3`, `1-3,5,7-9`",
           "poll_interval": "Con qué frecuencia HAKboard sincroniza los datos de Kanboard con Home Assistant. Predeterminado 5m, mínimo 5s."
         }
@@ -52,7 +52,7 @@
           "instance_name": "Ingresa un nombre amigable para tu Instancia. Esto se puede cambiar en cualquier momento.",
           "api_endpoint": "Copia/Pega el endpoint API completo desde Kanboard, incluyendo /jsonrpc.php",
           "api_token": "Copia/Pega el Token API desde Kanboard.",
-          "verify_ssl": "Verificar certificados SSL/TLS al conectarse a Kanboard. Deshabilitar solo para certificados autofirmados.",
+          "verify_ssl": "Deshabilitar solo para certificados autofirmados.",
           "project_filter": "Especifica qué IDs de Proyectos sincronizar. Ejemplos: `1`, `1,5,11`, `1-3`, `1-3,5,7-9`",
           "poll_interval": "Con qué frecuencia HAKboard sincroniza los datos de Kanboard con Home Assistant. Predeterminado 5m, mínimo 5s."
         }

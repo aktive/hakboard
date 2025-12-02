@@ -126,6 +126,7 @@ class HakboardBaseSensor(CoordinatorEntity, SensorEntity):
 # SUMMARY: PROJECTS TOTAL
 # ============================================================================
 class HakboardProjectsTotalSensor(HakboardBaseSensor):
+    _attr_icon = "mdi:folder-pound"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, instance_key):
@@ -146,6 +147,7 @@ class HakboardProjectsTotalSensor(HakboardBaseSensor):
 # SUMMARY: PROJECTS SYNCED
 # ============================================================================
 class HakboardProjectsSyncedSensor(HakboardBaseSensor):
+    _attr_icon = "mdi:folder-sync"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, instance_key, allowed_ids):
@@ -168,6 +170,7 @@ class HakboardProjectsSyncedSensor(HakboardBaseSensor):
 # SUMMARY: USERS
 # ============================================================================
 class HakboardUsersSensor(HakboardBaseSensor):
+    _attr_icon = "mdi:account-group"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, instance_key):
@@ -304,6 +307,7 @@ class HakboardSystemStatusSensor(HakboardBaseSensor):
 # PROJECT SENSOR
 # ============================================================================
 class HakboardProjectSensor(HakboardBaseSensor):
+    _attr_icon = "mdi:view-dashboard"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, instance_key, project_data, api_endpoint):
