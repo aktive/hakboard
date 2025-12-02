@@ -136,7 +136,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, instance_key)},
         manufacturer="HAKboard",
-        name=f"HAKboard ({instance_name})",
+        name=f"HAKboard • {instance_name}",
         model="Kanboard Integration",
         sw_version=sw_version,
         entry_type="service",
