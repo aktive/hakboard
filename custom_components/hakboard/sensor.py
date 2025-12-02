@@ -1,6 +1,8 @@
-from homeassistant.components.sensor import SensorEntity
+"""Sensor platform for HAKboard integration."""
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.util import dt as dt_util
 from datetime import datetime
 
@@ -8,6 +10,8 @@ from .const import (
     DOMAIN,
     CONF_PROJECT_FILTER,
     CONF_INSTANCE_KEY,
+    CONF_INSTANCE_NAME,
+    CONF_DISPLAY_NAME,  # Backward compatibility
     CONF_API_ENDPOINT,
 )
 from .utils import parse_text_into_ids
@@ -17,7 +21,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
     data = hass.data[DOMAIN][entry.entry_id]
 
     merged = {**entry.data, **entry.options}
-    display_name = merged.get("display_name", merged.get("instance_key"))
+    # Get instance_name with backward compatibility
+    instance_name = merged.get(CONF_INSTANCE_NAME) or merged.get(
+        CONF_DISPLAY_NAME, merged.get("instance_key")
+    )
     instance_key = merged.get(CONF_INSTANCE_KEY)
 
     coordinator = data["coordinator"]
@@ -97,20 +104,21 @@ class HakboardBaseSensor(CoordinatorEntity, SensorEntity):
         self.instance_key = instance_key
 
     @property
-    def display_name_dynamic(self):
+    def instance_name_dynamic(self):
+        """Get instance name with backward compatibility."""
         merged = {
             **self.coordinator.config_entry.data,
             **self.coordinator.config_entry.options,
         }
-        return merged.get("display_name", merged.get("instance_key"))
+        return merged.get(CONF_INSTANCE_NAME) or merged.get(
+            CONF_DISPLAY_NAME, merged.get("instance_key")
+        )
 
     @property
     def device_info(self):
+        """Return device info for this sensor."""
         return {
             "identifiers": {(DOMAIN, self.instance_key)},
-            "name": f"HAKboard ({self.display_name_dynamic})",
-            "manufacturer": "HAKboard",
-            "entry_type": "service",
         }
 
 
@@ -118,6 +126,8 @@ class HakboardBaseSensor(CoordinatorEntity, SensorEntity):
 # SUMMARY: PROJECTS TOTAL
 # ============================================================================
 class HakboardProjectsTotalSensor(HakboardBaseSensor):
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
     def __init__(self, coordinator, instance_key):
         super().__init__(coordinator, instance_key)
         self._attr_unique_id = f"hakboard_{instance_key}_summary_projects_total"
@@ -125,7 +135,7 @@ class HakboardProjectsTotalSensor(HakboardBaseSensor):
 
     @property
     def name(self):
-        return f"{self.display_name_dynamic} • Summary: Projects Total"
+        return f"{self.instance_name_dynamic} • Summary: Projects Total"
 
     @property
     def native_value(self):
@@ -136,6 +146,8 @@ class HakboardProjectsTotalSensor(HakboardBaseSensor):
 # SUMMARY: PROJECTS SYNCED
 # ============================================================================
 class HakboardProjectsSyncedSensor(HakboardBaseSensor):
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
     def __init__(self, coordinator, instance_key, allowed_ids):
         super().__init__(coordinator, instance_key)
         self.allowed_ids = allowed_ids
@@ -144,7 +156,7 @@ class HakboardProjectsSyncedSensor(HakboardBaseSensor):
 
     @property
     def name(self):
-        return f"{self.display_name_dynamic} • Summary: Projects Synced"
+        return f"{self.instance_name_dynamic} • Summary: Projects Synced"
 
     @property
     def native_value(self):
@@ -156,6 +168,8 @@ class HakboardProjectsSyncedSensor(HakboardBaseSensor):
 # SUMMARY: USERS
 # ============================================================================
 class HakboardUsersSensor(HakboardBaseSensor):
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
     def __init__(self, coordinator, instance_key):
         super().__init__(coordinator, instance_key)
         self._attr_unique_id = f"hakboard_{instance_key}_summary_users"
@@ -163,7 +177,7 @@ class HakboardUsersSensor(HakboardBaseSensor):
 
     @property
     def name(self):
-        return f"{self.display_name_dynamic} • Summary: Users"
+        return f"{self.instance_name_dynamic} • Summary: Users"
 
     @property
     def native_value(self):
@@ -178,7 +192,7 @@ class HakboardUsersSensor(HakboardBaseSensor):
 
         user_list = [
             {
-                "name": u.get("username"),
+                "username": u.get("username"),
                 "role": u.get("role"),
                 "open_tasks": u.get("open_tasks", 0),
             }
@@ -197,6 +211,8 @@ class HakboardUsersSensor(HakboardBaseSensor):
 # ============================================================================
 class HakboardSystemStatusSensor(HakboardBaseSensor):
     _attr_icon = "mdi:pulse"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
@@ -219,7 +235,7 @@ class HakboardSystemStatusSensor(HakboardBaseSensor):
 
     @property
     def name(self):
-        return f"{self.display_name_dynamic} • System Status"
+        return f"{self.instance_name_dynamic} • System Status"
 
     @property
     def native_value(self):
@@ -249,7 +265,29 @@ class HakboardSystemStatusSensor(HakboardBaseSensor):
         projects = self.coordinator.data.get("projects", [])
         synced = len([p for p in projects if p["id"] in self.allowed_ids])
 
+        # Extract instance URL from project data (more reliable than API endpoint)
+        instance_url = None
+        if projects:
+            # Get first project with URL data
+            for project in projects:
+                url_obj = project.get("url", {})
+                board_url = url_obj.get("board", "")
+                if board_url:
+                    # Parse base URL from board URL (e.g., "http://kb.example.com/?..." -> "http://kb.example.com")
+                    try:
+                        from urllib.parse import urlparse
+                        parsed = urlparse(board_url)
+                        instance_url = f"{parsed.scheme}://{parsed.netloc}"
+                        break
+                    except Exception:
+                        pass
+
+        # Fallback to deriving from API endpoint if no project URLs available
+        if not instance_url:
+            instance_url = self.api_endpoint.replace("/jsonrpc.php", "").rstrip("/")
+
         return {
+            "instance_url": instance_url,
             "poll_interval": interval_str,
             "api_endpoint": self.api_endpoint,
             "config_entry_id": self.config_entry_id,
@@ -258,7 +296,7 @@ class HakboardSystemStatusSensor(HakboardBaseSensor):
             "last_success_timestamp": dt_util.now().isoformat()
             if self.coordinator.last_update_success
             else None,
-            "display_name": self.display_name_dynamic,
+            "instance_name": self.instance_name_dynamic,
         }
 
 
@@ -266,6 +304,8 @@ class HakboardSystemStatusSensor(HakboardBaseSensor):
 # PROJECT SENSOR
 # ============================================================================
 class HakboardProjectSensor(HakboardBaseSensor):
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
     def __init__(self, coordinator, instance_key, project_data, api_endpoint):
         super().__init__(coordinator, instance_key)
 
@@ -281,7 +321,7 @@ class HakboardProjectSensor(HakboardBaseSensor):
     @property
     def name(self):
         return (
-            f"{self.display_name_dynamic} • Project {self.project_id}: "
+            f"{self.instance_name_dynamic} • Project {self.project_id}: "
             f"{self.project_name}"
         )
 
@@ -304,7 +344,8 @@ class HakboardProjectSensor(HakboardBaseSensor):
 
         attrs = {
             "id": p.get("id"),
-            "name": p.get("name"),
+            "task_count": p.get("task_count", 0),
+            "project_name": p.get("name"),
             "identifier": p.get("identifier"),
             "description": p.get("description"),
             "project_url": self.project_url,

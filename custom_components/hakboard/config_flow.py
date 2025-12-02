@@ -10,16 +10,19 @@ from .const import (
     CONF_API_ENDPOINT,
     CONF_API_TOKEN,
     CONF_INSTANCE_KEY,
-    CONF_DISPLAY_NAME,
+    CONF_INSTANCE_NAME,
+    CONF_DISPLAY_NAME,  # Backward compatibility
     CONF_PROJECT_FILTER,
     CONF_POLL_INTERVAL,
     CONF_POLL_INTERVAL_SECONDS,
+    CONF_VERIFY_SSL,
     DEFAULT_API_ENDPOINT,
     DEFAULT_API_TOKEN,
     DEFAULT_INSTANCE_KEY,
-    DEFAULT_DISPLAY_NAME,
+    DEFAULT_INSTANCE_NAME,
     DEFAULT_PROJECT_FILTER,
     DEFAULT_POLL_INTERVAL,
+    DEFAULT_VERIFY_SSL,
     MINIMUM_POLL_INTERVAL,
     MAX_INSTANCE_KEY_LENGTH,
     MAX_TEXT_LENGTH,
@@ -35,13 +38,19 @@ _LOGGER = logging.getLogger(__name__)
 # ---------------------------------------------------------
 # Soft API token validator (does NOT block setup)
 # ---------------------------------------------------------
-async def async_validate_token(endpoint: str, token: str) -> bool:
-    api = HakboardAPI(endpoint, token)
+async def async_validate_token(
+    endpoint: str, token: str, instance_key: str = "", instance_name: str = ""
+) -> bool:
+    """Validate API credentials during config flow."""
+    api = HakboardAPI(
+        endpoint, token,
+        instance_key=instance_key,
+        instance_name=instance_name,
+    )
     try:
-        valid = await api.async_validate_credentials()
-        return valid
+        return await api.async_validate_credentials()
     except Exception as err:
-        _LOGGER.error("Credential validation error: %s", err)
+        _LOGGER.error("HAKboard: Credential validation error - %s", err)
         return False
 
 
@@ -67,6 +76,11 @@ def get_schema(defaults=None, include_identifier=True):
             default=defaults.get(CONF_API_TOKEN, DEFAULT_API_TOKEN),
         ): cv.string,
 
+        vol.Optional(
+            CONF_VERIFY_SSL,
+            default=defaults.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL),
+        ): bool,
+
         vol.Required(
             CONF_PROJECT_FILTER,
             default=defaults.get(CONF_PROJECT_FILTER, DEFAULT_PROJECT_FILTER),
@@ -83,7 +97,7 @@ def get_schema(defaults=None, include_identifier=True):
     }
 
     if include_identifier:
-        # Initial setup: instance key first, then display name, then base
+        # Initial setup: instance key first, then instance name, then base
         return vol.Schema(
             {
                 vol.Required(
@@ -94,19 +108,23 @@ def get_schema(defaults=None, include_identifier=True):
                     vol.Length(min=1, max=MAX_INSTANCE_KEY_LENGTH),
                 ),
                 vol.Optional(
-                    CONF_DISPLAY_NAME,
-                    default=defaults.get(CONF_DISPLAY_NAME, DEFAULT_DISPLAY_NAME),
+                    CONF_INSTANCE_NAME,
+                    default=defaults.get(CONF_INSTANCE_NAME) or defaults.get(
+                        CONF_DISPLAY_NAME, DEFAULT_INSTANCE_NAME
+                    ),
                 ): vol.All(cv.string, vol.Length(min=1, max=20)),
                 **base,
             }
         )
 
-    # Options flow: **display name first**, then the rest of the fields
+    # Options flow: **instance name first**, then the rest of the fields
     return vol.Schema(
         {
             vol.Optional(
-                CONF_DISPLAY_NAME,
-                default=defaults.get(CONF_DISPLAY_NAME, DEFAULT_DISPLAY_NAME),
+                CONF_INSTANCE_NAME,
+                default=defaults.get(CONF_INSTANCE_NAME) or defaults.get(
+                    CONF_DISPLAY_NAME, DEFAULT_INSTANCE_NAME
+                ),
             ): vol.All(cv.string, vol.Length(min=1, max=20)),
             **base,
         }
@@ -210,17 +228,14 @@ class HakboardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if entry.unique_id.lower() == inst:
                         errors[CONF_INSTANCE_KEY] = "endpoint_already_exists"
 
-            # Soft token validation
+            # Soft token validation (warn but don't block)
             if not errors:
                 ok = await async_validate_token(
                     cleaned[CONF_API_ENDPOINT],
                     cleaned[CONF_API_TOKEN],
+                    instance_key=cleaned.get(CONF_INSTANCE_KEY, ""),
+                    instance_name=cleaned.get(CONF_INSTANCE_NAME, ""),
                 )
-                if not ok:
-                    _LOGGER.warning(
-                        "Soft credential validation failed for %s",
-                        cleaned[CONF_API_ENDPOINT],
-                    )
 
             if not errors:
                 inst = cleaned[CONF_INSTANCE_KEY].lower()
@@ -228,7 +243,8 @@ class HakboardConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._abort_if_unique_id_configured()
 
                 label = (
-                    cleaned.get(CONF_DISPLAY_NAME)
+                    cleaned.get(CONF_INSTANCE_NAME)
+                    or cleaned.get(CONF_DISPLAY_NAME)  # Backward compat
                     or cleaned[CONF_INSTANCE_KEY]
                 )
                 return self.async_create_entry(
@@ -272,16 +288,14 @@ class HakboardOptionsFlow(config_entries.OptionsFlow):
                 cleaned = user_input
 
             if not errors:
-                ok = await async_validate_token(
+                # Get instance info from existing entry for logging
+                merged = {**self.config_entry.data, **self.config_entry.options}
+                await async_validate_token(
                     cleaned[CONF_API_ENDPOINT],
                     cleaned[CONF_API_TOKEN],
+                    instance_key=merged.get(CONF_INSTANCE_KEY, ""),
+                    instance_name=cleaned.get(CONF_INSTANCE_NAME, ""),
                 )
-                if not ok:
-                    _LOGGER.warning(
-                        "Soft credential validation failed (options) for %s",
-                        cleaned[CONF_API_ENDPOINT],
-                    )
-
                 return self.async_create_entry(title="", data=cleaned)
 
         merged = {**self.config_entry.data, **self.config_entry.options}
@@ -294,8 +308,10 @@ class HakboardOptionsFlow(config_entries.OptionsFlow):
             ),
             errors=errors,
             description_placeholders={
-                "endpoint_id": merged.get(CONF_INSTANCE_KEY, "Instance Key"),
-                "display_name": merged.get(CONF_DISPLAY_NAME, "Instance Display Name"),
+                "instance_key": merged.get(CONF_INSTANCE_KEY, "Instance Key"),
+                "instance_name": merged.get(CONF_INSTANCE_NAME) or merged.get(
+                    CONF_DISPLAY_NAME, "Instance Name"
+                ),
                 "api_help": "URL must end with /jsonrpc.php and token must be 40–80 hex characters.",
             },
         )

@@ -1,36 +1,41 @@
 # Dependencies
 # https://github.com/thomasloven/lovelace-auto-entities
 # https://github.com/thomasloven/lovelace-card-mod
-# https://github.com/thomasloven/lovelace-layout-card
 # https://github.com/thomasloven/lovelace-template-entity-row
 
 type: custom:auto-entities
 card:
   type: entities
-  title: HAKboard Users
+  title: Homelab • Users
   show_header_toggle: false
   card_mod:
-    style: |
-      hui-section-row {
-        --divider-color: transparent !important;
-      }
-      div#states > :first-child { 
-        border-top: none !important;
-      }
-      .card-header {
-        padding-bottom: 0px !important;
-      }
+    style:
+      hui-section-row $: |
+        .label {
+          font-size: 1.2em !important;
+        }
+      .: |
+        hui-section-row {
+          --divider-color: transparent !important;
+        }
+        div#states > :first-child {
+          border-top: none !important;
+        }
+        .card-header {
+          padding-bottom: 0px !important;
+        }
 filter:
   template: |
     {% set ns = namespace(rows=[]) %}
     {% for s in states.sensor %}
       {% if 'hakboard_' in s.entity_id and '_summary_users' in s.entity_id %}
         {% set friendly = s.name.split(' • ')[0] %}
+        {% set user_count = s.state | int(0) %}
         {% set active = s.attributes.active_count | default(0) %}
         {% set admin = s.attributes.admin_count | default(0) %}
         {% set header = {
           'type': 'section',
-          'label': friendly ~ ' • Active: ' ~ active ~ ' | Admins: ' ~ admin
+          'label': friendly ~ ' • Users: ' ~ user_count ~ ' · Active: ' ~ active ~ ' · Admins: ' ~ admin
         } %}
         {% set ns.rows = ns.rows + [header] %}
         {% for user in s.attributes.user_list | default([]) | sort(attribute='open_tasks', reverse=True) %}
@@ -44,7 +49,7 @@ filter:
           {% set row = {
             'type': 'custom:template-entity-row',
             'entity': s.entity_id,
-            'name': user.name,
+            'name': user.username,
             'icon': icon,
             'state': (user.open_tasks | default(0)) ~ ' Tasks'
           } %}

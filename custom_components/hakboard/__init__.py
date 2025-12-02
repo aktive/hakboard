@@ -1,7 +1,11 @@
+"""The HAKboard integration."""
+from __future__ import annotations
+
 import logging
-import voluptuous as vol
-import re
 from datetime import timedelta
+from typing import Any
+
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -10,6 +14,7 @@ from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components import websocket_api
 from homeassistant.helpers import device_registry as dr
+from homeassistant.loader import async_get_integration
 
 from .api import HakboardAPI
 from .const import (
@@ -17,10 +22,14 @@ from .const import (
     CONF_API_ENDPOINT,
     CONF_API_TOKEN,
     CONF_INSTANCE_KEY,
+    CONF_INSTANCE_NAME,
+    CONF_DISPLAY_NAME,  # Backward compatibility
     CONF_PROJECT_FILTER,
     CONF_POLL_INTERVAL_SECONDS,
+    CONF_VERIFY_SSL,
     DEFAULT_POLL_INTERVAL,
-    CONF_DISPLAY_NAME,
+    DEFAULT_INSTANCE_NAME,
+    DEFAULT_VERIFY_SSL,
 )
 from .utils import parse_text_into_ids
 
@@ -35,14 +44,19 @@ FRONTEND_SCRIPT_URL = "/hakboard_static/hakboard-status-card.js"
     vol.Required("type"): "hakboard/get_endpoints",
 })
 @callback
-def websocket_get_endpoints(hass, connection, msg):
+def websocket_get_endpoints(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict[str, Any],
+) -> None:
+    """Handle WebSocket request to get HAKboard instance keys."""
     entries = hass.config_entries.async_entries(DOMAIN)
     result = []
     for entry in entries:
         result.append({
             "entry_id": entry.entry_id,
             "title": entry.title,
-            "endpoint_id": entry.data.get(CONF_INSTANCE_KEY, "Unknown"),
+            "instance_key": entry.data.get(CONF_INSTANCE_KEY, "Unknown"),
         })
     connection.send_result(msg["id"], result)
 
@@ -51,7 +65,7 @@ def websocket_get_endpoints(hass, connection, msg):
 #   SETUP ENTRY
 # =========================================================
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    _LOGGER.info("HAKBOARD: Starting setup for %s", entry.title)
+    _LOGGER.info("Setting up HAKboard integration: %s", entry.title)
 
     # 1. Register frontend assets
     await hass.http.async_register_static_paths([
@@ -66,8 +80,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 2. Register custom WebSocket API
     try:
         websocket_api.async_register_command(hass, websocket_get_endpoints)
-    except Exception:
-        pass
+    except ValueError:
+        # Command already registered (e.g., during reload)
+        _LOGGER.debug("WebSocket command already registered")
 
     # 3. Standard Setup Logic
     config = {**entry.data, **entry.options}
@@ -75,16 +90,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     instance_key_cased = config.get(CONF_INSTANCE_KEY)
     instance_key = instance_key_cased.lower()
 
-    display_name = entry.title
+    # Get instance_name with backward compatibility for display_name
+    instance_name = config.get(CONF_INSTANCE_NAME) or config.get(
+        CONF_DISPLAY_NAME, DEFAULT_INSTANCE_NAME
+    )
 
     poll_interval = config.get(CONF_POLL_INTERVAL_SECONDS, DEFAULT_POLL_INTERVAL)
     api_endpoint = config.get(CONF_API_ENDPOINT)
     api_token = config.get(CONF_API_TOKEN)
+    verify_ssl = config.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
 
     filter_text = config.get(CONF_PROJECT_FILTER, "")
     allowed_ids = parse_text_into_ids(filter_text)
 
-    api = HakboardAPI(api_endpoint, api_token)
+    api = HakboardAPI(
+        api_endpoint, api_token, verify_ssl,
+        instance_key=instance_key,
+        instance_name=instance_name,
+    )
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -103,13 +126,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "instance_key": instance_key
     }
 
-    # REGISTER DEVICE AS A “SERVICE”
+    # REGISTER DEVICE AS A "SERVICE"
+    # Get version from manifest.json
+    integration = await async_get_integration(hass, DOMAIN)
+    sw_version = str(integration.version) if integration.version else "unknown"
+
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
         identifiers={(DOMAIN, instance_key)},
         manufacturer="HAKboard",
-        name=f"HAKboard ({display_name})",
+        name=f"HAKboard ({instance_name})",
+        model="Kanboard Integration",
+        sw_version=sw_version,
         entry_type="service",
     )
 

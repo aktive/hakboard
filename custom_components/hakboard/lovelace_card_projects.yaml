@@ -1,38 +1,80 @@
 # Dependencies
 # https://github.com/thomasloven/lovelace-auto-entities
 # https://github.com/thomasloven/lovelace-card-mod
-# https://github.com/thomasloven/lovelace-layout-card
 # https://github.com/thomasloven/lovelace-template-entity-row
 
 type: custom:auto-entities
 card:
   type: entities
-  title: Homelab 2 • Projects
+  title: Homelab • Projects
   show_header_toggle: false
+  card_mod:
+    style:
+      hui-section-row $: |
+        .label {
+          font-size: 1.2em !important;
+        }
+      .: |
+        div#states > :first-child {
+          border-top: none !important;
+        }
+        .card-header {
+          padding-bottom: 0px !important;
+        }
+        hui-section-row {
+          --divider-color: transparent !important;
+        }
 filter:
-  template: >
+  template: |
     {% set ns = namespace(cards=[]) %}
+    {% set instances = namespace(list=[]) %}
+    {% set ignored = ['friendly_name', 'icon', 'id', 'name', 'identifier', 'description', 'unit_of_measurement', 'device_class', 'attribution', 'restored', 'supported_features', 'state_class', 'options', 'context', 'project_url', 'owner', 'project_email', 'last_activity', 'overdue_count', 'task_count'] %}
 
-    {% set ignored = ['friendly_name', 'icon', 'id', 'name', 'identifier',
-    'description', 'unit_of_measurement', 'device_class', 'attribution',
-    'restored', 'supported_features', 'state_class', 'options', 'context',
-    'project_url', 'owner', 'project_email', 'last_activity', 'overdue_count']
-    %}
-
-
+    {# First, get all unique instances #}
     {% for s in states.sensor %}
       {% if 'hakboard_' in s.entity_id and '_project_' in s.entity_id %}
-        
+        {% set instance_key = s.entity_id.split('_')[1] %}
+        {% if instance_key not in instances.list %}
+          {% set instances.list = instances.list + [instance_key] %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {# For each instance, create section and project rows #}
+    {% for instance_key in instances.list %}
+      {# Get instance name from summary sensor #}
+      {% set summary_id = 'sensor.hakboard_' ~ instance_key ~ '_summary_projects_total' %}
+      {% set summary = states[summary_id] %}
+      {% set instance_name = summary.name.split(' • ')[0] if summary else instance_key %}
+
+      {# Get all projects for this instance #}
+      {% set projects = namespace(list=[]) %}
+      {% for s in states.sensor %}
+        {% if 'hakboard_' ~ instance_key ~ '_project_' in s.entity_id %}
+          {% set projects.list = projects.list + [s] %}
+        {% endif %}
+      {% endfor %}
+
+      {# Add section header #}
+      {% set header = {
+        'type': 'section',
+        'label': instance_name ~ ' • Projects: ' ~ (projects.list | length)
+      } %}
+      {% set ns.cards = ns.cards + [header] %}
+
+      {# Sort projects by task_count attribute (integer) descending #}
+      {% for s in projects.list | sort(attribute='attributes.task_count', reverse=true) %}
+
         {# --- PART A: Build Column String (Bottom Line) --- #}
         {% set ns_str = namespace(text=[]) %}
         {% for k,v in s.attributes.items() %}
-           {# FIX: Only show columns that actually have tasks (>0) #}
-           {% if k not in ignored and v | int > 0 %}
+           {# Only show columns that actually have tasks (>0) #}
+           {% if k not in ignored and v | int(0) > 0 %}
               {% set ns_str.text = ns_str.text + [k ~ ': ' ~ v | string] %}
            {% endif %}
         {% endfor %}
         {% set col_text = ns_str.text | join(' | ') %}
-        
+
         {# --- PART B: Build Meta String (Top Line) --- #}
         {# 1. Time #}
         {% set time_text = '' %}
@@ -46,17 +88,16 @@ filter:
         {% endif %}
 
         {# 2. ID and Owner with Emojis #}
-        {% set id_text = '#️⃣ ' ~ s.attributes.id %}
-        {% set owner_first = (s.attributes.owner | string).split(' ')[0] %}
+        {% set id_text = '#️⃣ ' ~ (s.attributes.id | default('?')) %}
+        {% set owner_first = (s.attributes.owner | default('Unknown') | string).split(' ')[0] %}
         {% set owner_text = '👤 ' ~ owner_first %}
 
-        
         {# 3. Combine Top Line #}
         {% set meta_parts = [id_text] %}
         {% if time_text %}{% set meta_parts = meta_parts + [time_text] %}{% endif %}
         {% set meta_parts = meta_parts + [owner_text] %}
-        
-        {# 4. NEW: Add Overdue Warning #}
+
+        {# 4. Add Overdue Warning #}
         {% set overdue = s.attributes.overdue_count | default(0) | int %}
         {% if overdue > 0 %}
            {% set meta_parts = meta_parts + ['⚠️ ' ~ overdue ~ ' Overdue'] %}
@@ -64,9 +105,8 @@ filter:
 
         {% set meta_line = meta_parts | join(' | ') %}
 
-        {# --- PART C: Combine Both Lines (Using \n instead of <br>) --- #}
+        {# --- PART C: Combine Both Lines --- #}
         {% if col_text %}
-            {# ADDED CHART EMOJI HERE #}
             {% set final_secondary = meta_line ~ '\n📊 ' ~ col_text %}
         {% else %}
             {% set final_secondary = meta_line ~ '\n✅ 0 Active Tasks' %}
@@ -74,34 +114,30 @@ filter:
 
         {# --- PART D: Get URL & Name --- #}
         {% set url = s.attributes.project_url | default('') %}
-        {% set clean_name = s.attributes.name | default(s.attributes.friendly_name) %}
-        
+        {% set clean_name = s.attributes.name | default(s.attributes.friendly_name | default('Unknown')) %}
+
         {# --- PART E: Create Row --- #}
         {% set row = {
           'type': 'custom:template-entity-row',
           'entity': s.entity_id,
           'name': clean_name,
+          'icon': '',
           'secondary': final_secondary,
           'tap_action': {
+            'action': 'more-info'
+          },
+          'hold_action': {
             'action': 'url',
             'url_path': url
           },
           'card_mod': {
-            'style': '.secondary { white-space: pre-wrap !important; height: auto !important; line-height: 1.4em !important; }'
+            'style': '.secondary { white-space: pre-wrap !important; height: auto !important; line-height: 1.4em !important; } state-badge { display: none !important; } .info { margin-left: 0 !important; }'
           }
         } %}
-        
+
         {% set ns.cards = ns.cards + [row] %}
-        
-      {% endif %}
+
+      {% endfor %}
     {% endfor %}
 
-
     {{ ns.cards }}
-sort:
-  method: state
-  reverse: true
-  numeric: true
-grid_options:
-  columns: 13
-  rows: auto

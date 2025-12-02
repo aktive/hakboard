@@ -1,7 +1,10 @@
-import aiohttp
-import async_timeout
+"""Kanboard JSON-RPC API client for HAKboard integration."""
+from typing import Any
 import logging
 import asyncio
+
+import aiohttp
+import async_timeout
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -9,11 +12,45 @@ _LOGGER = logging.getLogger(__name__)
 class HakboardAPI:
     """Kanboard JSON-RPC API client."""
 
-    def __init__(self, endpoint: str, token: str):
+    def __init__(
+        self,
+        endpoint: str,
+        token: str,
+        verify_ssl: bool = True,
+        instance_key: str = "",
+        instance_name: str = "",
+    ) -> None:
+        """Initialize the API client.
+
+        Args:
+            endpoint: Kanboard JSON-RPC endpoint URL
+            token: API authentication token
+            verify_ssl: Whether to verify SSL certificates (default: True)
+            instance_key: Short instance identifier for logging (e.g., "hl")
+            instance_name: Friendly instance name for logging (e.g., "Homelab")
+        """
         self._endpoint = endpoint.rstrip("/")
         self._token = token
+        self._verify_ssl = verify_ssl
+        self._instance_key = instance_key
+        self._instance_name = instance_name
 
-    async def _rpc_call(self, session, method, params=None, req_id=1):
+    @property
+    def _log_prefix(self) -> str:
+        """Return formatted log prefix for this instance."""
+        if self._instance_key and self._instance_name:
+            return f"HAKboard ({self._instance_key} • {self._instance_name})"
+        elif self._instance_key:
+            return f"HAKboard ({self._instance_key})"
+        return "HAKboard"
+
+    async def _rpc_call(
+        self,
+        session: aiohttp.ClientSession,
+        method: str,
+        params: dict[str, Any] | None = None,
+        req_id: int = 1,
+    ) -> Any:
         """Helper to perform a single JSON-RPC call."""
         payload = {
             "jsonrpc": "2.0",
@@ -27,14 +64,18 @@ class HakboardAPI:
             self._endpoint,
             json=payload,
             auth=aiohttp.BasicAuth("jsonrpc", self._token),
-            ssl=False,
+            ssl=self._verify_ssl,
         ) as resp:
             if resp.status != 200:
-                _LOGGER.error("Kanboard API HTTP error %s", resp.status)
+                _LOGGER.error(
+                    "%s: API request failed with HTTP %s", self._log_prefix, resp.status
+                )
                 return None
             data = await resp.json()
             if "error" in data:
-                _LOGGER.error("Kanboard API RPC error: %s", data["error"])
+                _LOGGER.error(
+                    "%s: API error - %s", self._log_prefix, data["error"]
+                )
                 return None
             return data.get("result")
 
@@ -52,18 +93,30 @@ class HakboardAPI:
                     result = await self._rpc_call(session, "getVersion")
                     if result is None:
                         _LOGGER.warning(
-                            "Kanboard API credential validation failed (no result from getVersion)."
+                            "%s: API endpoint unavailable or credentials invalid",
+                            self._log_prefix,
                         )
                         return False
                     return True
         except Exception as err:
-            _LOGGER.error("Kanboard API credential validation error: %s", err)
+            _LOGGER.error(
+                "%s: Connection failed - %s", self._log_prefix, err
+            )
             return False
 
-    async def async_fetch_data(self, allowed_ids=None):
-        """Fetches Projects, Users, Overdue items, Column stats, and Workloads."""
+    async def async_fetch_data(
+        self, allowed_ids: set[int] | None = None
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Fetch Projects, Users, Overdue items, Column stats, and Workloads.
+
+        Args:
+            allowed_ids: Set of project IDs to fetch detailed data for
+
+        Returns:
+            Dictionary containing 'projects' and 'users' lists
+        """
         if allowed_ids is None:
-            allowed_ids = []
+            allowed_ids = set()
 
         allowed_ids_str = [str(i) for i in allowed_ids]
 
@@ -178,5 +231,5 @@ class HakboardAPI:
                     }
 
         except Exception as err:
-            _LOGGER.error("Kanboard API error: %s", err)
+            _LOGGER.error("%s: Data fetch failed - %s", self._log_prefix, err)
             return {"projects": [], "users": []}

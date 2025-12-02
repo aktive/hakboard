@@ -1,14 +1,15 @@
 console.info(
-  "%c HAKboard-Satus-Card %c v0.1.0 ",
+  "%c HAKboard-Status-Card %c v0.1.0 ",
   "color: white; background: #b3710eff; font-weight: bold;",
   "color: #b3710eff; background: white;"
 );
 
+// Official HA approach: import from unpkg CDN
 import {
   LitElement,
   html,
   css,
-} from "https://unpkg.com/lit@2.8.0/index.js?module";
+} from "https://unpkg.com/lit@3.2.0/index.js?module";
 
 class HakboardStatusCard extends LitElement {
   static get properties() {
@@ -24,6 +25,7 @@ class HakboardStatusCard extends LitElement {
       show_workload: true,
       show_filter: true,
       show_interval: true,
+      show_kanboard_link: true,
       show_config: true,
       show_refresh: true,
 
@@ -67,7 +69,7 @@ class HakboardStatusCard extends LitElement {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 14px 16px 0 16px;
+        padding: 14px 6px 0 16px;
       }
 
       .title {
@@ -78,12 +80,12 @@ class HakboardStatusCard extends LitElement {
 
       .header-actions {
         display: flex;
-        gap: 6px;
+        gap: 2px;
       }
 
       .icon-btn {
-        width: 40px;
-        height: 40px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -178,7 +180,7 @@ class HakboardStatusCard extends LitElement {
       `;
     }
 
-    const title = this.config.title || `${s.attributes.display_name} • Status`;
+    const title = this.config.title || `${s.attributes.instance_name} • Status`;
 
     const totalProj = this.hass.states[`sensor.hakboard_${ep}_summary_projects_total`]?.state;
     const syncedProj = this.hass.states[`sensor.hakboard_${ep}_summary_projects_synced`]?.state;
@@ -193,6 +195,14 @@ class HakboardStatusCard extends LitElement {
           <div class="title">${title}</div>
 
           <div class="header-actions">
+            ${this.config.show_kanboard_link !== false
+              ? html`
+                  <div class="icon-btn" @click=${() => this._handleKanboard(s)}>
+                    <ha-icon icon="mdi:open-in-new"></ha-icon>
+                  </div>
+                `
+              : ""}
+
             ${this.config.show_config !== false
               ? html`
                   <div class="icon-btn" @click=${() => this._handleConfig()}>
@@ -329,13 +339,39 @@ class HakboardStatusCard extends LitElement {
     window.history.pushState(null, "", "/config/integrations/integration/hakboard");
     window.dispatchEvent(new Event("location-changed", { bubbles: true, composed: true }));
   }
+
+  _handleKanboard(state) {
+    // Use custom URL if set, otherwise fall back to instance_url from sensor
+    const customUrl = this.config.custom_kanboard_url;
+    const defaultUrl = state?.attributes?.instance_url;
+
+    let url = customUrl || defaultUrl;
+
+    if (!url) {
+      console.warn("HAKboard: No URL available (custom or instance_url)");
+      return;
+    }
+
+    // Ensure URL has a protocol (http:// or https://)
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+
+    window.open(url, "_blank");
+  }
 }
 
 customElements.define("hakboard-status-card", HakboardStatusCard);
 
 class HakboardStatusCardEditor extends LitElement {
   static get properties() {
-    return { hass: {}, config: {}, _endpoints: { state: true } };
+    return {
+      hass: {},
+      config: {},
+      _endpoints: { state: true },
+      _showCustomUrl: { state: true },
+      _urlError: { state: true }
+    };
   }
 
   static get styles() {
@@ -354,6 +390,18 @@ class HakboardStatusCardEditor extends LitElement {
         color: var(--primary-text-color);
       }
 
+      .checkbox-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .checkbox-column {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
       .checkbox-row {
         display: flex;
         align-items: center;
@@ -362,6 +410,44 @@ class HakboardStatusCardEditor extends LitElement {
 
       .checkbox-row label {
         cursor: pointer;
+      }
+
+      .checkbox-with-toggle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .toggle-cog {
+        --mdc-icon-size: 15px;
+        font-size: 15px;
+        cursor: pointer;
+        color: var(--secondary-text-color);
+        transition: color 0.2s;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .toggle-cog:hover {
+        color: var(--primary-text-color);
+      }
+
+      .custom-url-field {
+        margin-top: 6px;
+      }
+
+      .custom-url-field input {
+        width: 100%;
+      }
+
+      .custom-url-field input.error {
+        border-color: var(--error-color);
+      }
+
+      .error-message {
+        color: var(--error-color);
+        font-size: 12px;
+        margin-top: 4px;
       }
     `;
   }
@@ -382,7 +468,7 @@ class HakboardStatusCardEditor extends LitElement {
   async _fetchEndpoints() {
     try {
       const res = await this.hass.callWS({ type: "hakboard/get_endpoints" });
-      const eps = [...new Set(res.map((x) => x.endpoint_id?.toLowerCase()).filter(Boolean))].sort();
+      const eps = [...new Set(res.map((x) => x.instance_key?.toLowerCase()).filter(Boolean))].sort();
 
       this._endpoints = eps;
 
@@ -425,16 +511,36 @@ class HakboardStatusCardEditor extends LitElement {
           />
         </div>
 
-        ${this._checkbox("Total Workload", "show_workload", check)}
-        ${this._checkbox("Project Filter", "show_filter", check)}
-        ${this._checkbox("Polling Interval", "show_interval", check)}
-        ${this._checkbox("Config Button", "show_config", check)}
-        ${this._checkbox("Refresh Button", "show_refresh", check)}
-        ${this._checkbox("Total Projects", "show_total_projects", check)}
-        ${this._checkbox("Synced Projects", "show_synced_projects", check)}
-        ${this._checkbox("Total Users", "show_total_users", check)}
-        ${this._checkbox("Active Users", "show_active_users", check)}
-        ${this._checkbox("Admins", "show_admin_users", check)}
+        <div class="checkbox-columns">
+          <div class="checkbox-column">
+            ${this._checkbox("Total Workload", "show_workload", check)}
+            ${this._checkbox("Project Filter", "show_filter", check)}
+            ${this._checkbox("Polling Interval", "show_interval", check)}
+            ${this._checkbox("Total Projects", "show_total_projects", check)}
+            ${this._checkbox("Synced Projects", "show_synced_projects", check)}
+            ${this._checkbox("Total Users", "show_total_users", check)}
+            ${this._checkbox("Active Users", "show_active_users", check)}
+            ${this._checkbox("Admins", "show_admin_users", check)}
+          </div>
+
+          <div class="checkbox-column">
+            ${this._checkboxWithToggle("Kanboard Link Button", "show_kanboard_link", check)}
+            ${this._showCustomUrl ? html`
+              <div class="custom-url-field">
+                <input
+                  type="text"
+                  placeholder="Custom URL (optional)"
+                  .value=${this.config.custom_kanboard_url || ""}
+                  @input=${(e) => this._handleUrlInput(e)}
+                  class=${this._urlError ? "error" : ""}
+                />
+                ${this._urlError ? html`<div class="error-message">${this._urlError}</div>` : ""}
+              </div>
+            ` : ""}
+            ${this._checkbox("Config Button", "show_config", check)}
+            ${this._checkbox("Refresh Button", "show_refresh", check)}
+          </div>
+        </div>
       </div>
     `;
   }
@@ -452,6 +558,99 @@ class HakboardStatusCardEditor extends LitElement {
         <label for=${id}>${label}</label>
       </div>
     `;
+  }
+
+  _checkboxWithToggle(label, key, checkFn) {
+    const id = `hakboard-${key}`;
+    return html`
+      <div class="checkbox-row">
+        <input
+          type="checkbox"
+          id=${id}
+          ?checked=${checkFn(this.config[key])}
+          @change=${(e) => this._chg(e, key, true)}
+        />
+        <div class="checkbox-with-toggle">
+          <label for=${id}>${label}</label>
+          <ha-icon
+            class="toggle-cog"
+            icon="mdi:cog-outline"
+            @click=${() => this._toggleCustomUrl()}
+          ></ha-icon>
+        </div>
+      </div>
+    `;
+  }
+
+  _toggleCustomUrl() {
+    this._showCustomUrl = !this._showCustomUrl;
+  }
+
+  _handleUrlInput(e) {
+    const value = e.target.value.trim();
+
+    // Clear error if field is empty (optional field)
+    if (!value) {
+      this._urlError = null;
+      this._emitChange("custom_kanboard_url", "");
+      return;
+    }
+
+    // Validate URL format
+    if (!this._isValidUrl(value)) {
+      this._urlError = "Please enter a valid URL";
+    } else {
+      this._urlError = null;
+    }
+
+    this._emitChange("custom_kanboard_url", value);
+  }
+
+  _isValidUrl(urlString) {
+    // Only reject things that will actually break or cause errors
+    // Allow simple hostnames for homelab DNS entries (e.g., "kanboard", "server")
+
+    // Reject if starts with invalid characters (not alphanumeric or protocol)
+    if (/^[^a-zA-Z0-9]/.test(urlString) && !urlString.startsWith("http")) {
+      return false;
+    }
+
+    // Reject strings with characters that browsers can't handle
+    const invalidChars = /[<>"\s{}|\\^`]/;
+    if (invalidChars.test(urlString)) {
+      return false;
+    }
+
+    // Reject strings that are obviously garbage (multiple consecutive special chars)
+    if (/[#@]{2,}|[@#&]{3,}/.test(urlString)) {
+      return false;
+    }
+
+    // Try to construct URL object - if it fails, it's invalid
+    try {
+      let testUrl = urlString;
+      // Add protocol if missing
+      if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
+        testUrl = "https://" + urlString;
+      }
+
+      const url = new URL(testUrl);
+
+      // Must have a hostname
+      if (!url.hostname) {
+        return false;
+      }
+
+      // Hostname should only contain valid characters
+      // Allow hyphens and dots, plus alphanumeric
+      if (!/^[a-zA-Z0-9.-]+$/.test(url.hostname)) {
+        return false;
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   _chg(ev, key, isChk = false) {

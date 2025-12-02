@@ -1,4 +1,11 @@
-def parse_text_into_ids(text: str):
+"""Utility functions for HAKboard integration."""
+
+
+def parse_text_into_ids(text: str) -> set[int]:
+    """Parse project filter text into a set of integer IDs.
+
+    Supports formats: "1", "1,5,11", "1-3", "1-3,5,7-9"
+    """
     ids = set()
     if not text:
         return ids
